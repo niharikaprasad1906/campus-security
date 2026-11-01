@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+*.avi
+*.mp4
+.env
+yolo26n.pt
