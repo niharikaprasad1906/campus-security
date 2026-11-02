@@ -1,0 +1,29 @@
+2026-11-02 16:43:15 | Restricted Zone Intrusion | Person ID: 2 | Camera: Main Gate
+2026-11-02 16:43:31 | Loitering Detected | Person ID: 3 | Camera: Main Gate
+2026-11-02 16:43:34 | Loitering Detected | Person ID: 7 | Camera: Main Gate
+2026-11-02 16:43:46 | Restricted Zone Intrusion | Person ID: 19 | Camera: Main Gate
+2026-11-02 16:44:14 | Restricted Zone Intrusion | Person ID: 22 | Camera: Main Gate
+2026-11-02 16:44:37 | Restricted Zone Intrusion | Person ID: 27 | Camera: Main Gate
+2026-11-02 16:44:43 | Restricted Zone Intrusion | Person ID: 33 | Camera: Main Gate
+2026-11-02 16:44:47 | Restricted Zone Intrusion | Person ID: 24 | Camera: Main Gate
+2026-11-02 16:48:38 | Restricted Zone Intrusion | Person ID: 2 | Camera: Main Gate
+2026-11-02 16:49:07 | Restricted Zone Intrusion | Person ID: 19 | Camera: Main Gate
+2026-11-02 16:49:40 | Restricted Zone Intrusion | Person ID: 22 | Camera: Main Gate
+2026-11-02 16:50:01 | Restricted Zone Intrusion | Person ID: 27 | Camera: Main Gate
+2026-11-02 16:50:06 | Restricted Zone Intrusion | Person ID: 33 | Camera: Main Gate
+2026-11-02 16:50:11 | Restricted Zone Intrusion | Person ID: 24 | Camera: Main Gate
+2026-11-02 16:55:05 | Restricted Zone Intrusion | Person ID: 2 | Camera: Main Gate
+2026-11-02 17:07:31 | Test Intrusion | Person ID: 42 | Camera: Main Gate | Zone: Restricted Zone
+2026-11-02 17:07:31 | Test Intrusion | Person ID: 99 | Camera: Main Gate | Zone: Restricted Zone
+2026-11-02 17:10:27 | Restricted Zone Intrusion | Person ID: 2 | Camera: Main Gate | Zone: Restricted Zone
+2026-11-02 17:10:34 | Overcrowding Detected | Person ID: N/A | Camera: Main Gate | Zone: Crowd Zone | Person count: 6
+2026-11-02 17:10:42 | Loitering Detected | Person ID: 17 | Camera: Main Gate | Zone: Restricted Zone | Duration: 15s; IDs observed: [2, 3, 9, 17]
+2026-11-02 17:10:42 | Loitering Detected | Person ID: 12 | Camera: Main Gate | Zone: Restricted Zone | Duration: 15s; IDs observed: [3, 7, 9, 10, 12]
+2026-11-02 17:10:42 | Loitering Detected | Person ID: 18 | Camera: Main Gate | Zone: Restricted Zone | Duration: 15s; IDs observed: [1, 3, 9, 10, 15, 18]
+2026-11-02 17:10:51 | Overcrowding Detected | Person ID: N/A | Camera: Main Gate | Zone: Crowd Zone | Person count: 6
+2026-11-02 17:10:59 | Loitering Detected | Person ID: 21 | Camera: Main Gate | Zone: Restricted Zone | Duration: 15s; IDs observed: [18, 19, 21]
+2026-11-02 17:11:05 | Loitering Detected | Person ID: 22 | Camera: Main Gate | Zone: Restricted Zone | Duration: 15s; IDs observed: [18, 20, 22]
+2026-11-02 17:11:19 | Loitering Detected | Person ID: 28 | Camera: Main Gate | Zone: Restricted Zone | Duration: 15s; IDs observed: [22, 28]
+2026-11-02 17:11:43 | Loitering Detected | Person ID: 33 | Camera: Main Gate | Zone: Restricted Zone | Duration: 15s; IDs observed: [30, 33]
+2026-11-02 17:11:47 | Overcrowding Detected | Person ID: N/A | Camera: Main Gate | Zone: Crowd Zone | Person count: 6
+2026-11-02 17:11:50 | Loitering Detected | Person ID: 32 | Camera: Main Gate | Zone: Restricted Zone | Duration: 15s; IDs observed: [24, 32]
