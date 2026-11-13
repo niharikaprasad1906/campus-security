@@ -1,0 +1,1 @@
+"""Campus security dashboard package."""

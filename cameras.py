@@ -10,7 +10,7 @@ For the current prototype only one camera (Main Gate) is active.
 
 from dataclasses import dataclass, field
 from typing import List
-from zones import MAIN_GATE_ZONES, Zone
+from zones import MAIN_GATE_ZONES, Zone, load_zone_configuration
 
 
 @dataclass
@@ -39,7 +39,7 @@ MAIN_GATE_CAMERA = Camera(
     camera_id="cam_01",
     name="Main Gate",
     video_path="sample_videos/campus.avi",
-    zones=MAIN_GATE_ZONES,
+    zones=load_zone_configuration("cam_01", MAIN_GATE_ZONES),
     tracker_config="custom_botsort.yaml",
     conf=0.3,
     imgsz=640,
