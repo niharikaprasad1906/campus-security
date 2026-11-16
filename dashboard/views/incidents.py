@@ -6,6 +6,7 @@ from typing import Callable
 import pandas as pd
 import streamlit as st
 
+from dashboard import storage
 from dashboard.database import mark_incident_reviewed
 from dashboard.components import (
     camera_options,
@@ -23,7 +24,7 @@ def render(
 ) -> None:
     st.caption(
         "Search and filter the incident history. Severity is derived from incident "
-        "type for display. Review statuses are persisted in SQLite."
+        "type for display. Review statuses are persisted in the configured database."
     )
     enriched = with_derived_fields(frame)
     if enriched.empty:
@@ -205,7 +206,7 @@ def render(
                 ):
                     try:
                         updated = mark_incident_reviewed(database_path, int(selected_id))
-                    except (OSError, sqlite3.Error) as error:
+                    except (OSError, sqlite3.Error, storage.StorageError) as error:
                         st.error(f"Could not save incident review status: {error}")
                     else:
                         if not updated:

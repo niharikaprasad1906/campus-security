@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import sys
 from datetime import datetime
@@ -5,15 +6,22 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from streamlit.errors import StreamlitSecretNotFoundError
 
 ROOT_PATH = Path(__file__).resolve().parents[1]
 if str(ROOT_PATH) not in sys.path:
     sys.path.insert(0, str(ROOT_PATH))
 
-from dashboard import database
+try:
+    supabase_db_url = st.secrets["SUPABASE_DB_URL"]
+except (KeyError, StreamlitSecretNotFoundError):
+    supabase_db_url = None
+if supabase_db_url:
+    os.environ["SUPABASE_DB_URL"] = str(supabase_db_url)
+
+from dashboard import database, storage
 from dashboard.style import apply_dashboard_style
 from dashboard.views import analytics, cameras, incidents, overview, settings, zones
-
 
 DATABASE_PATH = ROOT_PATH / "incidents.db"
 PAGES = [
@@ -54,13 +62,23 @@ with st.sidebar:
     st.caption("Incident records are accessed read-only.")
     st.caption(f"Updated {datetime.now().strftime('%H:%M:%S')}")
 
+if storage.is_supabase_configured():
+    try:
+        storage.initialize_schema(DATABASE_PATH)
+    except storage.StorageError as error:
+        st.error(f"Could not initialize the Supabase incident database: {error}")
+        st.stop()
+
 try:
     incident_data = get_incidents(str(DATABASE_PATH))
 except FileNotFoundError as error:
     st.error(f"Incident database not found. {error}")
-    st.info("Start the existing incident logger to create the database.")
+    st.info(
+        "For Streamlit Cloud, add SUPABASE_DB_URL under the app's Secrets settings "
+        "to connect a persistent incident database."
+    )
     st.stop()
-except sqlite3.Error as error:
+except (sqlite3.Error, storage.StorageError) as error:
     st.error(f"Could not read the incident database: {error}")
     st.stop()
 

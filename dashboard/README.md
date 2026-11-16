@@ -1,9 +1,8 @@
 # Campus Security Operations Dashboard
 
 The Streamlit application does not require the separate YOLO window to be
-running. Viewing dashboard pages reads the existing `incidents.db` in
-read-only mode; the explicit fresh-tracking action loads the YOLO model and
-intentionally writes newly detected incidents to that same database.
+running. It uses local SQLite by default. When `SUPABASE_DB_URL` is configured,
+it reads and writes incident records in Supabase PostgreSQL instead.
 
 ## Run
 
@@ -43,24 +42,41 @@ From the repository root:
 - **System Logs & Settings** — available incident text log and information
   about dashboard/backend capabilities.
 
+## Supabase deployment
+
+The dashboard creates the empty `incidents` table on startup when Supabase is
+configured. It does not import the local `incidents.db`; existing local history
+stays on the local machine.
+
+1. Create a Supabase project and copy its PostgreSQL connection URI. Use the
+   Supabase connection pooler URI for hosted deployments and ensure it includes
+   SSL mode.
+2. In Streamlit Community Cloud, open the app's **Settings → Secrets** and add:
+
+   ```toml
+   SUPABASE_DB_URL = "postgresql://..."
+   ```
+
+3. Reboot the app. Keep the connection URI private; never commit it or
+   `.streamlit/secrets.toml` to Git.
+
+Without this secret, the app continues to use the local `incidents.db` file.
+
 ## Data and limitations
 
-`database.py` reads the existing `incidents` table and does not create a
-second database. Viewing pages does not modify incident history. Running fresh
-tracking intentionally saves newly detected incidents through the existing
-backend logger and also appends its existing text log; the backend's normal
-duplicate-event protection still applies. Marking an incident reviewed adds
-`review_status` and `reviewed_at` columns when needed; this is an additive
-schema migration and preserves all existing records. Review information is
-shared with every dashboard session. Severity is derived from incident type;
-it is not stored in the database. The application does not provide investigation
-notes or persistent camera connectivity state. The dashboard does not claim a
-camera is live or fabricate camera/service logs.
+Viewing pages does not modify incident history. Running fresh tracking
+intentionally saves newly detected incidents through the backend logger and
+also appends its existing text log; the backend's normal duplicate-event
+protection still applies. Marking an incident reviewed adds `review_status` and
+`reviewed_at` columns when needed; this is an additive schema migration and
+preserves existing records. Review information is shared with every dashboard
+session. Severity is derived from incident type; it is not stored in the
+database. The application does not provide investigation notes or persistent
+camera connectivity state. The dashboard does not claim a camera is live or
+fabricate camera/service logs.
 
 The application resolves `incidents.db`, `incident_log.txt`, backend camera
 configuration, model weights, and sample video paths relative to the
 repository, not the current working directory. Admin-password access is a
 single shared environment-secret gate, not a campus identity-management
-system. Use the project's virtual
-environment so the dashboard has access to the backend's YOLO dependencies.
-`imageio-ffmpeg` encodes annotated, browser-compatible sample playback.
+system. `imageio-ffmpeg` encodes annotated, browser-compatible sample playback.

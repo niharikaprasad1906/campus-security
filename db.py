@@ -1,17 +1,17 @@
 """
 db.py — Incident logging for Campus Security system.
 
-Stores incidents in SQLite (incidents.db) for structured querying and also
-appends a human-readable line to incident_log.txt for backward compatibility.
+Stores incidents in SQLite locally or Supabase PostgreSQL when configured, and
+also appends a human-readable line to incident_log.txt for compatibility.
 
 Deduplication: an identical (incident_type, camera_id, zone_name, track_id)
 combination logged within DEDUP_WINDOW_SECONDS is silently dropped so the
 same physical event is not recorded on every frame.
 """
 
-import sqlite3
 import datetime
-import os
+
+from dashboard import storage
 
 DB_PATH = "incidents.db"
 TEXT_LOG_PATH = "incident_log.txt"
@@ -25,27 +25,10 @@ def init_db():
     Create the incidents table if it does not already exist.
     Safe to call on every startup — does not delete existing data.
     """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS incidents (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp     TEXT    NOT NULL,
-            incident_type TEXT    NOT NULL,
-            camera_id     TEXT    NOT NULL,
-            camera_name   TEXT    NOT NULL,
-            zone_name     TEXT    NOT NULL DEFAULT '',
-            track_id      TEXT,
-            extra_info    TEXT
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
+    storage.initialize_schema(DB_PATH)
 
 
-def _is_duplicate(cursor, incident_type, camera_id, zone_name, track_id):
+def _is_duplicate(connection, incident_type, camera_id, zone_name, track_id):
     """
     Return True if an identical event was already recorded within
     DEDUP_WINDOW_SECONDS.
@@ -54,7 +37,8 @@ def _is_duplicate(cursor, incident_type, camera_id, zone_name, track_id):
         datetime.datetime.now() - datetime.timedelta(seconds=DEDUP_WINDOW_SECONDS)
     ).strftime("%Y-%m-%d %H:%M:%S")
 
-    cursor.execute(
+    cursor = storage.execute(
+        connection,
         """
         SELECT id FROM incidents
         WHERE incident_type = ?
@@ -62,6 +46,15 @@ def _is_duplicate(cursor, incident_type, camera_id, zone_name, track_id):
           AND zone_name     = ?
           AND track_id      IS ?
           AND timestamp     >= ?
+        LIMIT 1
+        """,
+        """
+        SELECT id FROM incidents
+        WHERE incident_type = %s
+          AND camera_id     = %s
+          AND zone_name     = %s
+          AND track_id      IS NOT DISTINCT FROM %s
+          AND timestamp     >= %s
         LIMIT 1
         """,
         (incident_type, camera_id, zone_name, track_id, cutoff),
@@ -98,20 +91,27 @@ def log_incident(
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     track_id_str = str(track_id) if track_id is not None else None
 
+    connection = None
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-
-        if _is_duplicate(cursor, incident_type, camera_id, zone_name, track_id_str):
-            conn.close()
+        connection = storage.connect(DB_PATH)
+        if _is_duplicate(
+            connection, incident_type, camera_id, zone_name, track_id_str
+        ):
             return  # Silent dedup — do not write anything
 
-        cursor.execute(
+        storage.execute(
+            connection,
             """
             INSERT INTO incidents
                 (timestamp, incident_type, camera_id, camera_name,
                  zone_name, track_id, extra_info)
             VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            """
+            INSERT INTO incidents
+                (timestamp, incident_type, camera_id, camera_name,
+                 zone_name, track_id, extra_info)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 timestamp,
@@ -123,10 +123,13 @@ def log_incident(
                 extra_info,
             ),
         )
-        conn.commit()
-        conn.close()
-    except sqlite3.Error as e:
+        storage.commit(connection)
+    except storage.StorageError as e:
         print(f"[DB ERROR] Could not log incident: {e}")
+        raise
+    finally:
+        if connection is not None:
+            connection.close()
 
     # Also write to the legacy text log for backward compatibility.
     try:
@@ -147,16 +150,22 @@ def get_recent_incidents(limit=50):
     Return the most recent incidents as a list of dicts.
     Useful for a dashboard or debugging.
     """
+    connection = None
     try:
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM incidents ORDER BY timestamp DESC LIMIT ?", (limit,)
+        connection = storage.connect(DB_PATH, readonly=True)
+        cursor = storage.execute(
+            connection,
+            "SELECT * FROM incidents ORDER BY timestamp DESC LIMIT ?",
+            "SELECT * FROM incidents ORDER BY timestamp DESC LIMIT %s",
+            (limit,),
         )
-        rows = [dict(row) for row in cursor.fetchall()]
-        conn.close()
-        return rows
-    except sqlite3.Error as e:
+        if cursor.description is None:
+            raise storage.StorageError("Incident database query returned no columns.")
+        columns = [column[0] for column in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    except storage.StorageError as e:
         print(f"[DB ERROR] Could not read incidents: {e}")
         return []
+    finally:
+        if connection is not None:
+            connection.close()
