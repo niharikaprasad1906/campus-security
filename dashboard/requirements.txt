@@ -2,3 +2,5 @@ pandas
 plotly
 streamlit
 imageio-ffmpeg
+opencv-python-headless
+ultralytics
