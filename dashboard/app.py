@@ -1,16 +1,20 @@
 import sqlite3
+import sys
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
+ROOT_PATH = Path(__file__).resolve().parents[1]
+if str(ROOT_PATH) not in sys.path:
+    sys.path.insert(0, str(ROOT_PATH))
+
 from dashboard import database
 from dashboard.style import apply_dashboard_style
 from dashboard.views import analytics, cameras, incidents, overview, settings, zones
 
 
-ROOT_PATH = Path(__file__).resolve().parents[1]
 DATABASE_PATH = ROOT_PATH / "incidents.db"
 PAGES = [
     "Overview",
