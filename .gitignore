@@ -2,9 +2,9 @@ venv/
 __pycache__/
 *.pyc
 *.avi
+!sample_videos/campus.avi
 *.mp4
 .env
 .streamlit/secrets.toml
-yolo26n.pt
 yolo26s.pt
 incidents.db

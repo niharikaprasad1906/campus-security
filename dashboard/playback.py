@@ -186,6 +186,9 @@ def process_sample_video(
                 raise RuntimeError(f"Sample video contains no readable frames: {recording}")
 
             height, width = first_frame.shape[:2]
+            # Ensure dimensions are divisible by 2 for H.264 (yuv420p) encoding
+            width = width - (width % 2)
+            height = height - (height % 2)
             writer = imageio_ffmpeg.write_frames(
                 str(output_path),
                 (width, height),
@@ -200,7 +203,11 @@ def process_sample_video(
             try:
                 frame = first_frame
                 while frame is not None:
+                    if frame.shape[0] != height or frame.shape[1] != width:
+                        frame = frame[:height, :width]
                     annotated = backend.process_frame(state, frame)
+                    if annotated.shape[0] != height or annotated.shape[1] != width:
+                        annotated = annotated[:height, :width]
                     writer.send(annotated.tobytes())
                     frame_count += 1
                     if progress_callback is not None and (
