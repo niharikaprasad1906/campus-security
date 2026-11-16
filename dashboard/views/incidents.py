@@ -8,6 +8,7 @@ import streamlit as st
 
 from dashboard import storage
 from dashboard.database import mark_incident_reviewed
+from dashboard.timezone import current_time
 from dashboard.components import (
     camera_options,
     date_bounds,
@@ -31,7 +32,7 @@ def render(
         st.info("No incidents are available to review.")
         return
 
-    today = pd.Timestamp.today().date()
+    today = current_time().date()
     today_count = int(enriched["timestamp"].dt.date.eq(today).sum())
     critical_count = int(enriched["severity"].eq("Critical").sum())
     (

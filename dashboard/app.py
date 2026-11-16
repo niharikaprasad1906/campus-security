@@ -1,8 +1,6 @@
 import os
 import sqlite3
 import sys
-from datetime import datetime
-from zoneinfo import ZoneInfo
 from pathlib import Path
 
 import pandas as pd
@@ -22,6 +20,7 @@ if supabase_db_url:
 
 from dashboard import database, storage
 from dashboard.style import apply_dashboard_style
+from dashboard.timezone import current_time
 from dashboard.views import analytics, cameras, incidents, overview, settings, zones
 
 DATABASE_PATH = ROOT_PATH / "incidents.db"
@@ -34,6 +33,7 @@ PAGES = [
     "System Logs & Settings",
 ]
 
+
 st.set_page_config(
     page_title="Campus Security Operations",
     page_icon="🛡️",
@@ -41,7 +41,12 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 apply_dashboard_style()
-IST = ZoneInfo("Asia/Kolkata")
+
+
+@st.fragment(run_every="1s")
+def render_current_time(format_string: str) -> None:
+    st.caption(current_time().strftime(format_string))
+
 
 @st.cache_data(ttl=30)
 def get_incidents(database_path: str) -> pd.DataFrame:
@@ -61,9 +66,7 @@ with st.sidebar:
         get_incidents.clear()
         st.rerun()
     st.caption("Incident records are accessed read-only.")
-    st.caption(
-    f"Updated {datetime.now(IST).strftime('%H:%M:%S')}"
-    )
+    render_current_time("Current time · %H:%M:%S")
 
 if storage.is_supabase_configured():
     try:
@@ -103,9 +106,7 @@ with header_right:
         "DATABASE CONNECTED</div>",
         unsafe_allow_html=True,
     )
-    st.caption(
-    datetime.now(IST).strftime("%A, %d %B %Y · %H:%M")
-)
+    render_current_time("%A, %d %B %Y · %H:%M:%S")
 st.divider()
 
 if page_title == "Overview":

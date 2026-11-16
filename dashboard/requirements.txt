@@ -1,8 +1,9 @@
 pandas
 plotly
-streamlit
+streamlit>=1.37
 imageio-ffmpeg
 opencv-python-headless
 ultralytics
 lap
 psycopg[binary]
+tzdata

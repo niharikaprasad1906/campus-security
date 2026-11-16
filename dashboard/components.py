@@ -3,6 +3,8 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
+from dashboard.timezone import current_time
+
 
 INCIDENT_LABELS = {
     "Restricted Zone Intrusion": "Intrusion",
@@ -60,7 +62,7 @@ def camera_options(frame: pd.DataFrame) -> list[str]:
 def date_bounds(frame: pd.DataFrame) -> tuple[date, date]:
     timestamps = pd.to_datetime(frame["timestamp"], errors="coerce").dropna()
     if timestamps.empty:
-        today = date.today()
+        today = current_time().date()
         return today, today
     return timestamps.min().date(), timestamps.max().date()
 

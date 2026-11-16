@@ -1,9 +1,9 @@
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
 from dashboard import storage
+from dashboard.timezone import current_time
 
 
 INCIDENT_SELECT_COLUMNS = """
@@ -165,7 +165,7 @@ def mark_incident_reviewed(database_path: Path, incident_id: int) -> bool:
             connection,
             update,
             postgres_update,
-            (datetime.now().isoformat(timespec="seconds"), incident_id),
+            (current_time().isoformat(timespec="seconds"), incident_id),
         )
         storage.commit(connection)
         return cursor.rowcount == 1

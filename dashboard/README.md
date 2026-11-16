@@ -13,6 +13,9 @@ From the repository root:
 .\venv\Scripts\python.exe -m streamlit run dashboard/app.py
 ```
 
+Streamlit Community Cloud installs the OpenCV system libraries declared in the
+repository-root `packages.txt`, which are required for uploaded-video analysis.
+
 ## Pages
 
 - **Overview** — incident totals, incident trend and distribution, recent

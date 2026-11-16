@@ -12,6 +12,7 @@ same physical event is not recorded on every frame.
 import datetime
 
 from dashboard import storage
+from dashboard.timezone import current_time
 
 DB_PATH = "incidents.db"
 TEXT_LOG_PATH = "incident_log.txt"
@@ -34,7 +35,7 @@ def _is_duplicate(connection, incident_type, camera_id, zone_name, track_id):
     DEDUP_WINDOW_SECONDS.
     """
     cutoff = (
-        datetime.datetime.now() - datetime.timedelta(seconds=DEDUP_WINDOW_SECONDS)
+        current_time() - datetime.timedelta(seconds=DEDUP_WINDOW_SECONDS)
     ).strftime("%Y-%m-%d %H:%M:%S")
 
     cursor = storage.execute(
@@ -88,7 +89,7 @@ def log_incident(
     extra_info : str | None
         Optional free-text detail appended to the record.
     """
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = current_time().strftime("%Y-%m-%d %H:%M:%S")
     track_id_str = str(track_id) if track_id is not None else None
 
     connection = None
