@@ -4,4 +4,5 @@ streamlit
 imageio-ffmpeg
 opencv-python-headless
 ultralytics
+lap
 psycopg[binary]
