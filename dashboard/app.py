@@ -2,6 +2,7 @@ import os
 import sqlite3
 import sys
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 import pandas as pd
@@ -40,7 +41,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 apply_dashboard_style()
-
+IST = ZoneInfo("Asia/Kolkata")
 
 @st.cache_data(ttl=30)
 def get_incidents(database_path: str) -> pd.DataFrame:
@@ -60,7 +61,9 @@ with st.sidebar:
         get_incidents.clear()
         st.rerun()
     st.caption("Incident records are accessed read-only.")
-    st.caption(f"Updated {datetime.now().strftime('%H:%M:%S')}")
+    st.caption(
+    f"Updated {datetime.now(IST).strftime('%H:%M:%S')}"
+    )
 
 if storage.is_supabase_configured():
     try:
@@ -100,7 +103,9 @@ with header_right:
         "DATABASE CONNECTED</div>",
         unsafe_allow_html=True,
     )
-    st.caption(datetime.now().strftime("%A, %d %B %Y · %H:%M"))
+    st.caption(
+    datetime.now(IST).strftime("%A, %d %B %Y · %H:%M")
+)
 st.divider()
 
 if page_title == "Overview":
