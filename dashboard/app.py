@@ -1,3 +1,4 @@
+import json
 import os
 import sqlite3
 import sys
@@ -20,7 +21,6 @@ if supabase_db_url:
 
 from dashboard import database, storage
 from dashboard.style import apply_dashboard_style
-from dashboard.timezone import current_time
 from dashboard.views import analytics, cameras, incidents, overview, settings, zones
 
 DATABASE_PATH = ROOT_PATH / "incidents.db"
@@ -43,9 +43,51 @@ st.set_page_config(
 apply_dashboard_style()
 
 
-@st.fragment(run_every="1s")
-def render_current_time(format_string: str) -> None:
-    st.caption(current_time().strftime(format_string))
+def render_current_time(include_date: bool = False) -> None:
+    time_options = {
+        "timeZone": "Asia/Kolkata",
+        "hour": "2-digit",
+        "minute": "2-digit",
+        "second": "2-digit",
+        "hourCycle": "h23",
+    }
+    date_options = {
+        "timeZone": "Asia/Kolkata",
+        "weekday": "long",
+        "day": "2-digit",
+        "month": "long",
+        "year": "numeric",
+    }
+    options = json.dumps(
+        {"date": date_options, "time": time_options}
+        if include_date
+        else {"time": time_options}
+    )
+    prefix = "" if include_date else "Current time · "
+    st.iframe(
+        f"""
+        <style>body {{ margin: 0; }}</style>
+        <div style="font: 0.875rem/1.5 sans-serif; color: #9aa0a6; white-space: nowrap">
+          <span id="campus-current-time"></span>
+        </div>
+        <script>
+          const formatters = {options};
+          const target = document.getElementById("campus-current-time");
+          function updateClock() {{
+            const now = new Date();
+            const time = new Intl.DateTimeFormat("en-GB", formatters.time).format(now);
+            const date = formatters.date
+              ? new Intl.DateTimeFormat("en-GB", formatters.date).format(now)
+              : {json.dumps(prefix)} + time;
+            target.textContent = formatters.date ? `${{date}} · ${{time}}` : date;
+          }}
+          updateClock();
+          window.setInterval(updateClock, 1000);
+        </script>
+        """,
+        height=28,
+        alt="Live current time",
+    )
 
 
 @st.cache_data(ttl=30)
@@ -66,7 +108,7 @@ with st.sidebar:
         get_incidents.clear()
         st.rerun()
     st.caption("Incident records are accessed read-only.")
-    render_current_time("Current time · %H:%M:%S")
+    render_current_time()
 
 if storage.is_supabase_configured():
     try:
@@ -106,7 +148,7 @@ with header_right:
         "DATABASE CONNECTED</div>",
         unsafe_allow_html=True,
     )
-    render_current_time("%A, %d %B %Y · %H:%M:%S")
+    render_current_time(include_date=True)
 st.divider()
 
 if page_title == "Overview":
