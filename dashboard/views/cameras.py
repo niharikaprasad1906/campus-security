@@ -1,4 +1,6 @@
+import hashlib
 import sqlite3
+import tempfile
 from pathlib import Path
 from typing import Callable
 
@@ -223,6 +225,147 @@ def render(
                 "recording to enable playback.</div></div>",
                 unsafe_allow_html=True,
             )
+
+        with st.expander("Analyze your own video"):
+            st.caption(
+                "Upload a video to run person tracking and incident detection "
+                f"using {camera.name}'s configured zones and rules. The uploaded "
+                "file is temporary and is not saved by the dashboard."
+            )
+            uploaded_video = st.file_uploader(
+                "Choose a video",
+                type=[
+                    "mp4", "avi", "mov", "mkv", "mpeg", "mpg",
+                    "m4v", "webm", "wmv", "3gp",
+                ],
+                key=f"uploaded_video_{camera.camera_id}",
+            )
+            uploaded_bytes = uploaded_video.getvalue() if uploaded_video else None
+            upload_hash = (
+                hashlib.sha256(uploaded_bytes).hexdigest()
+                if uploaded_bytes is not None
+                else None
+            )
+            upload_run_key = f"uploaded_playback_{camera.camera_id}"
+            playback_speed = st.select_slider(
+                "Completed video speed",
+                options=[1.0, 1.5, 2.0, 3.0],
+                value=2.0,
+                format_func=lambda speed: f"{speed:g}x",
+                key=f"uploaded_playback_speed_{camera.camera_id}",
+            )
+
+            if st.button(
+                "Analyze uploaded video",
+                key=f"analyze_upload_{camera.camera_id}",
+                type="primary",
+                disabled=uploaded_bytes is None,
+            ):
+                st.session_state.pop(upload_run_key, None)
+                st.markdown("#### Uploaded video analysis")
+                live_video = st.empty()
+                progress = st.progress(0, text="Loading detection model...")
+
+                def show_uploaded_frame(
+                    image: object,
+                    current: int,
+                    total: int,
+                    tracker_ids: list[int],
+                    canonical_ids: list[int],
+                ) -> None:
+                    live_video.image(
+                        image,
+                        channels="BGR",
+                        width="stretch",
+                        caption=f"Analyzing upload · frame {current:,} of {total:,}",
+                    )
+                    if current % 5 == 0 or current == total:
+                        progress.progress(
+                            min(current / max(total, 1), 1.0),
+                            text=f"Analyzing frame {current:,} of {total:,}",
+                        )
+
+                try:
+                    with tempfile.TemporaryDirectory(
+                        prefix="campus-security-upload-"
+                    ) as directory:
+                        temporary_directory = Path(directory)
+                        upload_path = temporary_directory / (
+                            "upload" + Path(uploaded_video.name).suffix.lower()
+                        )
+                        upload_path.write_bytes(uploaded_bytes)
+                        result = process_sample_video(
+                            camera=camera,
+                            recording=upload_path,
+                            database_path=database_path,
+                            frame_callback=show_uploaded_frame,
+                            text_log_path=temporary_directory / "incidents.txt",
+                            playback_speed=playback_speed,
+                        )
+                except ModuleNotFoundError as error:
+                    if error.name == "imageio_ffmpeg":
+                        st.error(
+                            "Playback dependency 'imageio-ffmpeg' is unavailable "
+                            "in the Python environment running Streamlit."
+                        )
+                    elif error.name in {"ultralytics", "cv2"}:
+                        st.error(
+                            f"Backend dependency '{error.name}' is unavailable. "
+                            "Run the dashboard with the project's backend environment."
+                        )
+                        st.code(
+                            ".\\venv\\Scripts\\python.exe -m streamlit run dashboard/app.py",
+                            language="powershell",
+                        )
+                    else:
+                        raise
+                except (OSError, RuntimeError, sqlite3.Error, ValueError) as error:
+                    st.error(f"Could not analyze the uploaded video: {error}")
+                else:
+                    st.session_state[upload_run_key] = {
+                        "source_hash": upload_hash,
+                        "source_name": uploaded_video.name,
+                        "video": result.video,
+                        "incidents": result.incidents,
+                        "frame_count": result.frame_count,
+                        "fps": result.fps,
+                        "playback_speed": result.playback_speed,
+                    }
+                    refresh_incidents()
+
+            uploaded_playback = st.session_state.get(upload_run_key)
+            if uploaded_playback and uploaded_playback["source_hash"] == upload_hash:
+                st.subheader("Replay analyzed video")
+                st.video(uploaded_playback["video"], format="video/mp4")
+                st.caption(
+                    f"{uploaded_playback['source_name']} · "
+                    f"{uploaded_playback['frame_count']:,} frames · "
+                    f"source {uploaded_playback['fps']:g} FPS · "
+                    f"replay {uploaded_playback['playback_speed']:g}x"
+                )
+                upload_incidents = uploaded_playback["incidents"]
+                st.subheader(
+                    f"New incident records from this upload ({len(upload_incidents)})"
+                )
+                if upload_incidents.empty:
+                    st.info("No new incident records were created for this upload.")
+                else:
+                    st.dataframe(
+                        upload_incidents.rename(
+                            columns={
+                                "id": "Record ID",
+                                "timestamp": "Timestamp",
+                                "incident_type": "Incident",
+                                "camera_id": "Camera ID",
+                                "camera_name": "Camera",
+                                "zone_name": "Zone",
+                                "track_id": "Person ID",
+                                "extra_info": "Details",
+                            }
+                        ),
+                        hide_index=True,
+                        width="stretch",
+                    )
 
         last_incident = recent.iloc[0] if not recent.empty else None
         if last_incident is None:
