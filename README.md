@@ -1,5 +1,5 @@
 # Campus Security Monitoring
-
+live demo:https://campus-security-zltj2tpbhlsvbttsoh9j8w.streamlit.app/
 A computer-vision prototype for analyzing recorded campus-camera footage, flagging activity in configurable monitoring zones, and reviewing incident records in a Streamlit dashboard.
 
 > **Prototype notice:** The configured source is a sample video, not a connected live CCTV feed. The detector and dashboard run as separate processes. This project is not a substitute for human review or a production security system.
