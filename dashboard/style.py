@@ -35,13 +35,11 @@ def apply_dashboard_style() -> None:
             margin: 0 0 .7rem; color: var(--text);
         }
         .system-status {
-            display: flex; align-items: center; gap: .5rem;
-            width: fit-content; max-width: 100%; box-sizing: border-box;
-            margin-left: auto; flex-wrap: wrap;
+            display: inline-flex; align-items: center; gap: .5rem;
             border: 1px solid #245641; background: #11291f;
             color: #8be0ba; border-radius: 999px;
             padding: .38rem .72rem; font-size: .72rem; font-weight: 700;
-            letter-spacing: .04em;
+            letter-spacing: .04em; float: right;
         }
         .status-dot {
             height: .48rem; width: .48rem; border-radius: 50%;

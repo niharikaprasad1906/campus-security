@@ -67,7 +67,7 @@ def render_current_time(include_date: bool = False) -> None:
     st.iframe(
         f"""
         <style>body {{ margin: 0; }}</style>
-        <div style="font: 0.875rem/1.5 sans-serif; color: #9aa0a6; white-space: normal; overflow-wrap: anywhere; max-width: 100%; box-sizing: border-box">
+        <div style="font: 0.875rem/1.5 sans-serif; color: #9aa0a6; white-space: nowrap">
           <span id="campus-current-time"></span>
         </div>
         <script>
@@ -85,8 +85,7 @@ def render_current_time(include_date: bool = False) -> None:
           window.setInterval(updateClock, 1000);
         </script>
         """,
-        height=64,
-        scrolling=False,
+        height=28,
         alt="Live current time",
     )
 
